@@ -123,7 +123,7 @@ class Simulator:
         self.clock = pygame.time.Clock()
         map.initFire()
         while True:
-            self.clock.tick(1)
+            self.clock.tick(self._tick)
             self.screen.fill((0, 0, 0))
             self.draw_squares(map)
             pygame.display.flip()
@@ -138,4 +138,5 @@ mapsize = (20, 20)
 
 forest = Forest(mapsize)
 simulator = Simulator(mapsize, (1000, 1000))
+simulator.configure(10)
 simulator.run(forest)
