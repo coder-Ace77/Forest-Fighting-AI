@@ -17,8 +17,16 @@ class Forest:
     def create_map(self):
         data = np.ones((self._width, self._height))
         return pd.DataFrame(data)
+    
+    def reset_map(self):
+        self._df = self.create_map()
+        self._ishealthy = self.create_map()
+
 
     def getState(self):
+        return self._df
+    
+    def getHealthState(self):
         return self._df
 
     def updatePoint(self, coor, value):
@@ -35,8 +43,8 @@ class Forest:
         return (self._width, self._height)
 
     def initFire(self):
-        x = random.randint(0, self._width)
-        y = random.randint(0, self._height)
+        x = random.randint(0, self._width-1)
+        y = random.randint(0, self._height-1)
         self._df.loc[x, y] -= 0.1
         self._ishealthy.loc[x,y] = 0
 
@@ -47,11 +55,12 @@ class Forest:
 
     def stateUpdate(self):
         relative_positions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        updated = False
         for i in range(self._width):
             for j in range(self._height):
                 if self._ishealthy.loc[i, j] == 1:
                     continue
-
+                updated = True
                 prob = random.randint(0, 5)
                 if prob > 3:
                     self._df.loc[i, j] -= 0.1
@@ -69,6 +78,7 @@ class Forest:
                         if (prob > 7 and self._ishealthy.loc[nx, ny] == 1 and 0.2 <= self._df.loc[i, j] <= 0.8):
                             self._ishealthy.loc[nx,ny] = 0
                             self._df.loc[nx, ny] -= 0.01
+        return updated
 
     def getColor(self, x, y):
         color_dict = {
@@ -84,7 +94,6 @@ class Forest:
             9: (115, 197, 119),
             10: (95, 188, 99),
         }
-        # print(x, y)
         return color_dict[max(int(self._df.loc[x, y] * 10), 0)]
 
     def getList(self):
@@ -127,6 +136,11 @@ class Simulator:
         self.map.initFire()
         self.clock.tick(1)
 
+    def reset_game(self):
+        self.map.reset_map()
+        self.agentPos = (0,0)
+        self.map.initFire()
+
     def draw_agent(self):
         x = self.convert_column_to_x(self.agentPos[0], self.square_width)
         y = self.convert_row_to_y(self.agentPos[1], self.square_height)
@@ -164,7 +178,7 @@ class Simulator:
     def play_step(self,action=None):
         reward=0
         self.screen.fill((0, 0, 0))
-        self.map.stateUpdate()
+        updated = self.map.stateUpdate()
         self.draw_trees()
         self.update_agent_pos(action)
         if action[4]==1:
@@ -179,4 +193,4 @@ class Simulator:
             if event.type==pygame.QUIT:
                 pygame.quit()
                 quit()
-        return reward,state
+        return reward,state, updated==False
