@@ -56,6 +56,7 @@ class Forest:
     def stateUpdate(self):
         relative_positions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         updated = False
+        burnt = 0
         for i in range(self._width):
             for j in range(self._height):
                 if self._ishealthy.loc[i, j] == 1:
@@ -68,6 +69,7 @@ class Forest:
                 if self._df.loc[i,j] <=0:
                     self._ishealthy.loc[i,j] = 1
                     self._df.loc[i,j] = 0
+                    burnt+=1
                 for dr, dc in relative_positions:
                     nx = i + dr
                     ny = j + dc
@@ -75,10 +77,10 @@ class Forest:
                         prob = random.randint(0, 10)
                         if 3 <= self._df.loc[i, j] <= 7:
                             prob += 1
-                        if (prob > 7 and self._ishealthy.loc[nx, ny] == 1 and 0.2 <= self._df.loc[i, j] <= 0.8):
+                        if (prob > 7 and self._ishealthy.loc[nx, ny] == 1 and self._df.loc[nx,ny]>0 and 0.2 <= self._df.loc[i, j] <= 0.8):
                             self._ishealthy.loc[nx,ny] = 0
                             self._df.loc[nx, ny] -= 0.01
-        return updated
+        return updated,burnt
 
     def getColor(self, x, y):
         color_dict = {
@@ -103,7 +105,7 @@ class Forest:
         return self._ishealthy
 
 class Simulator:
-    _tick = 1
+    _tick = 60
 
     def __init__(self, map, resolution=(1000, 1000), lineWidth=2):
         self.resolution = resolution
@@ -134,7 +136,7 @@ class Simulator:
         self.screen = pygame.display.set_mode(self.resolution)
         self.clock = pygame.time.Clock()
         self.map.initFire()
-        self.clock.tick(1)
+        self.clock.tick(60)
 
     def reset_game(self):
         self.map.reset_map()
@@ -178,19 +180,29 @@ class Simulator:
     def play_step(self,action=None):
         reward=0
         self.screen.fill((0, 0, 0))
-        updated = self.map.stateUpdate()
+        prob = random.randint(1,5)
+        if prob>3:
+            updated,burnt = self.map.stateUpdate()
+        else:
+            updated=True
         self.draw_trees()
         self.update_agent_pos(action)
         if action[4]==1:
             if self.extinguish():
                 reward=10
             else:
-                reward=-5
+                reward=-1
+        # reward-=burnt
         self.draw_agent()
         state = self.get_agent_state()
         pygame.display.flip()
+        # x=True
+        # while x:
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 pygame.quit()
                 quit()
+                # if event.type == pygame.KEYDOWN:
+                #     x=False
+
         return reward,state, updated==False
