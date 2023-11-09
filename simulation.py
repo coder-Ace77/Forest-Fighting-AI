@@ -4,6 +4,7 @@ import random
 import pandas as pd
 import numpy as np
 
+
 class Forest:
     _width = 100
     _height = 100
@@ -17,15 +18,14 @@ class Forest:
     def create_map(self):
         data = np.ones((self._width, self._height))
         return pd.DataFrame(data)
-    
+
     def reset_map(self):
         self._df = self.create_map()
         self._ishealthy = self.create_map()
 
-
     def getState(self):
         return self._df
-    
+
     def getHealthState(self):
         return self._df
 
@@ -43,15 +43,15 @@ class Forest:
         return (self._width, self._height)
 
     def initFire(self):
-        x = random.randint(0, self._width-1)
-        y = random.randint(0, self._height-1)
+        x = random.randint(0, self._width - 1)
+        y = random.randint(0, self._height - 1)
         self._df.loc[x, y] -= 0.1
-        self._ishealthy.loc[x,y] = 0
+        self._ishealthy.loc[x, y] = 0
 
-    def setState(self,x,y,v):
-        curr = self._ishealthy.loc[x,y]
-        self._ishealthy.loc[x,y] = v
-        return curr==0
+    def setState(self, x, y, v):
+        curr = self._ishealthy.loc[x, y]
+        self._ishealthy.loc[x, y] = v
+        return curr == 0
 
     def stateUpdate(self):
         relative_positions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -65,11 +65,11 @@ class Forest:
                 prob = random.randint(0, 5)
                 if prob > 3:
                     self._df.loc[i, j] -= 0.1
-                
-                if self._df.loc[i,j] <=0:
-                    self._ishealthy.loc[i,j] = 1
-                    self._df.loc[i,j] = 0
-                    burnt+=1
+
+                if self._df.loc[i, j] <= 0:
+                    self._ishealthy.loc[i, j] = 1
+                    self._df.loc[i, j] = 0
+                    burnt += 1
                 for dr, dc in relative_positions:
                     nx = i + dr
                     ny = j + dc
@@ -77,10 +77,15 @@ class Forest:
                         prob = random.randint(0, 10)
                         if 3 <= self._df.loc[i, j] <= 7:
                             prob += 1
-                        if (prob > 7 and self._ishealthy.loc[nx, ny] == 1 and self._df.loc[nx,ny]>0 and 0.2 <= self._df.loc[i, j] <= 0.8):
-                            self._ishealthy.loc[nx,ny] = 0
+                        if (
+                            prob > 7
+                            and self._ishealthy.loc[nx, ny] == 1
+                            and self._df.loc[nx, ny] > 0
+                            and 0.2 <= self._df.loc[i, j] <= 0.8
+                        ):
+                            self._ishealthy.loc[nx, ny] = 0
                             self._df.loc[nx, ny] -= 0.01
-        return updated,burnt
+        return updated, burnt
 
     def getColor(self, x, y):
         color_dict = {
@@ -100,9 +105,33 @@ class Forest:
 
     def getList(self):
         return self._df.values.tolist()
-    
-    def get_area(self,x1,y1,x2,y2):
+
+    def get_area(self, x, y, min_x, min_y, max_x, max_y):
+        matrix = self._ishealthy.iloc[min_y : max_y + 1, min_x : max_x + 1]
+        if ((y - min_y)) < 2:
+            row = 2 - (y - min_y)
+            col = 1 + max_x - x
+            row_up = np.ones((row, col)) * 2
+            matrix = np.insert(matrix, 0, row_up, axis=0)
+        if (max_y - y) < 2:
+            row = 2 - (max_y - y)
+            col = 1 + max_x - x
+            row_down = np.ones((row, col)) * 2
+            matrix = np.append(matrix, [row_down], axis=0)
+        if (max_x - x) < 2:
+            row = 5
+            col = 2 - (max_x - x)
+            col_right = np.ones((row, col)) * 2
+            matrix = np.concatenate((matrix, col_right), axis=1)
+        if (x - min_x) < 2:
+            row = 5
+            col = 2 - (x - min_x)
+            col_left = np.ones((row, col)) * 2
+            matrix = np.concatenate((col_left, matrix), axis=1)
+
+        print(matrix)
         return self._ishealthy
+
 
 class Simulator:
     _tick = 60
@@ -113,7 +142,7 @@ class Simulator:
         self.map = map
         self.mapSize = map.getSize()
         self.evaluate_dimensions()
-        self.agentPos = (0,0)
+        self.agentPos = (0, 0)
 
     def configure(self, tick):
         self._tick = tick
@@ -131,7 +160,7 @@ class Simulator:
 
     def convert_row_to_y(self, row, square_height):
         return self.lineWidth * (row + 1) + square_height * row
-    
+
     def init_game(self):
         self.screen = pygame.display.set_mode(self.resolution)
         self.clock = pygame.time.Clock()
@@ -140,20 +169,22 @@ class Simulator:
 
     def reset_game(self):
         self.map.reset_map()
-        self.agentPos = (0,0)
+        self.agentPos = (0, 0)
         self.map.initFire()
 
     def draw_agent(self):
         x = self.convert_column_to_x(self.agentPos[0], self.square_width)
         y = self.convert_row_to_y(self.agentPos[1], self.square_height)
-        geometry = (x+10, y+10, self.square_width-10, self.square_height-10)
-        pygame.draw.rect(self.screen,(0,0,255), geometry)
+        geometry = (x + 10, y + 10, self.square_width - 10, self.square_height - 10)
+        pygame.draw.rect(self.screen, (0, 0, 255), geometry)
 
-    def update_agent_pos(self,action):
-        new_pos = (self.agentPos[0]+action[0]-action[1],self.agentPos[1]-action[2]+action[3])
-        if 0<=new_pos[0]<self.mapSize[0] and 0<=new_pos[1]<self.mapSize[1]:
+    def update_agent_pos(self, action):
+        new_pos = (
+            self.agentPos[0] + action[0] - action[1],
+            self.agentPos[1] - action[2] + action[3],
+        )
+        if 0 <= new_pos[0] < self.mapSize[0] and 0 <= new_pos[1] < self.mapSize[1]:
             self.agentPos = new_pos
-
 
     def draw_trees(self):
         for row in range(self.mapSize[0]):
@@ -162,36 +193,38 @@ class Simulator:
                 y = self.convert_row_to_y(row, self.square_height)
                 geometry = (x, y, self.square_width, self.square_height)
                 pygame.draw.rect(self.screen, self.map.getColor(row, column), geometry)
-    
+
     def extinguish(self):
-        rand = random.randint(0,5)
-        if rand>1:
-            return self.map.setState(self.agentPos[0],self.agentPos[1],1)
+        rand = random.randint(0, 5)
+        if rand > 1:
+            return self.map.setState(self.agentPos[0], self.agentPos[1], 1)
         return False
-    
+
     def get_agent_state(self):
-        (x,y) = self.agentPos
-        min_x = max(x-2,0)
-        min_y = max(y-2,0)
-        max_x = min(x+2,self.mapSize[0])
-        max_y = min(y+2,self.mapSize[1])
-        return self.map.get_area(min_x,max_x,min_y,max_y)
-    
-    def play_step(self,action=None):
-        reward=0
+        (x, y) = self.agentPos
+        min_x = max(x - 2, 0)
+        min_y = max(y - 2, 0)
+        max_x = min(x + 2, self.mapSize[0])
+        max_y = min(y + 2, self.mapSize[1])
+        # print(x, y)
+        # print(min_x, max_y, max_x, min_y)
+        return self.map.get_area(x, y, min_x, min_y, max_x, max_y)
+
+    def play_step(self, action=None):
+        reward = 0
         self.screen.fill((0, 0, 0))
-        prob = random.randint(1,5)
-        if prob>3:
-            updated,burnt = self.map.stateUpdate()
+        prob = random.randint(1, 5)
+        if prob > 3:
+            updated, burnt = self.map.stateUpdate()
         else:
-            updated=True
+            updated = True
         self.draw_trees()
         self.update_agent_pos(action)
-        if action[4]==1:
+        if action[4] == 1:
             if self.extinguish():
-                reward=10
+                reward = 10
             else:
-                reward=-1
+                reward = -1
         # reward-=burnt
         self.draw_agent()
         state = self.get_agent_state()
@@ -199,10 +232,10 @@ class Simulator:
         # x=True
         # while x:
         for event in pygame.event.get():
-            if event.type==pygame.QUIT:
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
                 # if event.type == pygame.KEYDOWN:
                 #     x=False
 
-        return reward,state, updated==False
+        return reward, state, updated == False
