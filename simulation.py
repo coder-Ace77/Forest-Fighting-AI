@@ -107,29 +107,30 @@ class Forest:
         return self._df.values.tolist()
 
     def get_area(self, x, y, min_x, min_y, max_x, max_y):
-        matrix = self._ishealthy.iloc[min_y : max_y + 1, min_x : max_x + 1]
-        if ((y - min_y)) < 2:
-            row = 2 - (y - min_y)
-            col = 1 + max_x - x
+        matrix = self._ishealthy.iloc[min_x : max_x + 1, min_y : max_y + 1]
+        if ((x - min_x)) < 2:
+            row = 2 - (x - min_x)
+            col = max_y - min_y + 1
             row_up = np.ones((row, col)) * 2
-            matrix = np.insert(matrix, 0, row_up, axis=0)
-        if (max_y - y) < 2:
-            row = 2 - (max_y - y)
-            col = 1 + max_x - x
-            row_down = np.ones((row, col)) * 2
-            matrix = np.append(matrix, [row_down], axis=0)
-        if (max_x - x) < 2:
-            row = 5
-            col = 2 - (max_x - x)
-            col_right = np.ones((row, col)) * 2
-            matrix = np.concatenate((matrix, col_right), axis=1)
-        if (x - min_x) < 2:
-            row = 5
-            col = 2 - (x - min_x)
-            col_left = np.ones((row, col)) * 2
-            matrix = np.concatenate((col_left, matrix), axis=1)
+            matrix = np.vstack((row_up, matrix))
 
-        print(matrix)
+        if (max_x - x) < 2:
+            row = 2 - (max_x - x)
+            col = max_y - min_y + 1
+            row_down = np.ones((row, col)) * 2
+            matrix = np.vstack((matrix, row_down))
+
+        if (max_y - y) < 2:
+            row = 5
+            col = 2 - (max_y - y)
+            col_right = np.ones((row, col)) * 2
+            matrix = np.hstack((matrix, col_right))
+
+        if (y - min_y) < 2:
+            row = 5
+            col = 2 - (y - min_y)
+            col_left = np.ones((row, col)) * 2
+            matrix = np.hstack((col_left, matrix))
         return self._ishealthy
 
 
@@ -204,8 +205,8 @@ class Simulator:
         (x, y) = self.agentPos
         min_x = max(x - 2, 0)
         min_y = max(y - 2, 0)
-        max_x = min(x + 2, self.mapSize[0])
-        max_y = min(y + 2, self.mapSize[1])
+        max_x = min(x + 2, self.mapSize[0] - 1)
+        max_y = min(y + 2, self.mapSize[1] - 1)
         # print(x, y)
         # print(min_x, max_y, max_x, min_y)
         return self.map.get_area(x, y, min_x, min_y, max_x, max_y)
