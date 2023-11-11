@@ -55,16 +55,16 @@ class Agent():
         x = 50 - gameIter
         if random.randint(0,100) < x:
             move = random.randint(0,4)
-            print("Random Move:",move)
+            # print("Random Move:",move)
             action[move]=1
 
         else:
             state0 = torch.tensor(self.convert_state(state),dtype=torch.float)
             prediction = self.model(state0)
             move = torch.argmax(prediction).item()
-            print("Pred Move:",move)
+            # print("Pred Move:",move)
             action[move]=1
-        print(action)
+        # print(action)
         return action
 
 
@@ -98,9 +98,10 @@ def train():
         if done:
             agent.train_long_memory()
             simulator.reset_game()
-            os.system('clear')
+            # print("Reset game")
+            # os.system('clear')
             rewards.append(total_reward)
-            print(rewards)
+            # print(rewards)
             sleep(1)
             total_reward=0
             # mean_score = total_score / gameIter
