@@ -131,6 +131,8 @@ class Forest:
             col = 2 - (y - min_y)
             col_left = np.ones((row, col)) * 2
             matrix = np.hstack((col_left, matrix))
+        # Matrix with 5X5
+        print(matrix)
         return self._ishealthy
 
 
@@ -162,8 +164,11 @@ class Simulator:
     def convert_row_to_y(self, row, square_height):
         return self.lineWidth * (row + 1) + square_height * row
 
-    def init_game(self):
-        self.screen = pygame.display.set_mode(self.resolution)
+    def init_game(self, display=True):
+        if display == False:
+            self.screen = pygame.display.set_mode(self.resolution, flags=pygame.HIDDEN)
+        else:
+            self.screen = pygame.display.set_mode(self.resolution, flags=pygame.SHOWN)
         self.clock = pygame.time.Clock()
         self.map.initFire()
         self.clock.tick(60)
@@ -207,8 +212,6 @@ class Simulator:
         min_y = max(y - 2, 0)
         max_x = min(x + 2, self.mapSize[0] - 1)
         max_y = min(y + 2, self.mapSize[1] - 1)
-        # print(x, y)
-        # print(min_x, max_y, max_x, min_y)
         return self.map.get_area(x, y, min_x, min_y, max_x, max_y)
 
     def play_step(self, action=None):
