@@ -22,9 +22,8 @@ The forest environment is modeled as a grid where each cell represents a part of
 
 ### Images
 ![Image1](Images/img1.png)
+
 ![Image1](Images/img2.png)
-![Image1](Images/img3.png)
-![Image1](Images/img4.png)
 
 ### Video
 [Watch Video](https://www.canva.com/design/DAGNEaLSG9w/Ckwk1tqNIGR4eoN9lx-BkA/watch?utm_content=DAGNEaLSG9w&utm_campaign=designshare&utm_medium=link&utm_source=editor)
