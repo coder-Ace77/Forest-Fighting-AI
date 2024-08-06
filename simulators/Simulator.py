@@ -1,6 +1,4 @@
 import warnings
-
-
 class Simulator(object):
     def __init__(self):
         self.dims = None
